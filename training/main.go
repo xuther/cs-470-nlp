@@ -6,7 +6,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"sort"
 	"strings"
 	"time"
 )
@@ -32,7 +31,7 @@ type Frequency struct {
 	Addativefreq float64
 }
 
-func buildTransitionProbabilities(path string) (map[string]Frequencies, map[string]Frequencies, []string) {
+func buildTransitionProbabilities(path string) (map[string]map[string]Frequency, map[string]map[string]Frequency, []string) {
 	//we're gonna rad through the string, and split on spaces - for now we're just interested in word transition frequencies - so first step is to count, then we normalize.
 
 	toReturnPos := make(map[string]map[string]Frequency)
@@ -110,7 +109,7 @@ func buildTransitionProbabilities(path string) (map[string]Frequencies, map[stri
 		}
 
 		total := totals[k]
-		freqs := Frequencies{}
+		freqs := make(map[string]Frequency)
 
 		for word, count := range v {
 			freq := float64(count) / float64(total)
@@ -118,23 +117,17 @@ func buildTransitionProbabilities(path string) (map[string]Frequencies, map[stri
 				PartOfSpeech: word,
 				Frequency:    freq,
 			}
-			freqs = append(freqs, newFreq)
+			freqs[word] = newFreq
 		}
 
 		//now we have all of our individual frequencies - go through and create 'addative' frequencies
 		//we'll use these later to build sentences
-		runningTotal := 0.0
-		for i := range freqs {
-			freqs[i].Addativefreq = runningTotal + freqs[i].Frequency
-			runningTotal = freqs[i].Addativefreq
-		}
-		sort.Sort(freqs)
 		toReturnPos[k] = freqs
 	}
 
 	for k, v := range posToWordFrequencies {
 		total := posTotals[k]
-		freqs := Frequencies{}
+		freqs := make(map[string]Frequency)
 
 		for pos, count := range v {
 			freq := float64(count) / float64(total)
@@ -142,14 +135,8 @@ func buildTransitionProbabilities(path string) (map[string]Frequencies, map[stri
 				Word:      pos,
 				Frequency: freq,
 			}
-			freqs = append(freqs, newFreq)
+			freqs[pos] = newFreq
 		}
-		runningTotal := 0.0
-		for i := range freqs {
-			freqs[i].Addativefreq = runningTotal + freqs[i].Frequency
-			runningTotal = freqs[i].Addativefreq
-		}
-		sort.Sort(freqs)
 		toReturnEmission[k] = freqs
 	}
 
@@ -214,7 +201,7 @@ func Main() {
 }
 
 //return the accuracy
-func Test(path string, TransitionFreq map[string]Frequencies, EmissionFrequencies map[string]Frequencies, PossibleLabels []string) float64 {
+func Test(path string, TransitionFreq map[string]map[string]Frequency, EmissionFrequencies map[string]map[string]Frequency, PossibleLabels []string) float64 {
 
 	numCorrect := 0.0
 	numChecked := 0.0

@@ -6,7 +6,7 @@ type DynamicEntry struct {
 	PrevIndicie int
 }
 
-func Label(TransitionFreq map[string]Frequencies, EmissionFrequencies map[string]Frequencies, PossibleLabels []string, toLabel []string) []string {
+func Label(TransitionFreq map[string]map[string]Frequency, EmissionFrequencies map[string]map[string]Frequency, PossibleLabels []string, toLabel []string) []string {
 	//viterbi algorithms
 
 	//initialize our dynamic 'table' (really we're just starting at the beginning to find the most likely value)
@@ -30,7 +30,8 @@ func Label(TransitionFreq map[string]Frequencies, EmissionFrequencies map[string
 			bestProb := 0.0
 			bestVal := 0
 			for k := 0; k < len(dynamicTable[i-1]); k++ {
-				challenger := (dynamicTable[i-1][k].Probability * GetFreqForPOS(TransitionFreq[PossibleLabels[k]], PossibleLabels[j]).Frequency) * GetFreqForEmis(EmissionFrequencies[PossibleLabels[j]], toLabel[i-1]).Frequency
+				challenger := (dynamicTable[i-1][k].Probability * TransitionFreq[PossibleLabels[k]][PossibleLabels[j]].Frequency) * EmissionFrequencies[PossibleLabels[j]][toLabel[i-1]].Frequency
+
 				if challenger > bestProb {
 					bestProb = challenger
 					bestVal = k
